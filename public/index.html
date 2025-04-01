@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Chat</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white flex justify-center items-center h-screen">
+
+    <div class="w-full max-w-md bg-gray-800 rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold text-center mb-4">🔥 Real-Time Chat</h1>
+
+        <div id="username-container" class="text-center">
+            <input type="text" id="username" placeholder="Enter your username" 
+                   class="w-full px-4 py-2 mb-4 text-black rounded focus:ring-2 focus:ring-blue-500">
+            <button onclick="joinChat()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Join Chat 🚀
+            </button>
+        </div>
+
+        <div id="chat" class="hidden">
+            <div id="chat-box" class="h-60 overflow-y-auto bg-gray-700 p-4 rounded mb-4"></div>
+            <div class="flex">
+                <input type="text" id="message" placeholder="Type a message..." 
+                       class="w-full px-4 py-2 text-black rounded-l focus:ring-2 focus:ring-blue-500">
+                <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-r">
+                    Send 🚀
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="notificationSound">
+        <source src="notification.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const socket = io();
+        let chatActive = true;
+        let username = '';
+
+        // Handle tab visibility
+        document.addEventListener("visibilitychange", () => {
+            chatActive = !document.hidden;
+            if (chatActive) document.title = "Real-Time Chat";
+        });
+
+        function joinChat() {
+            username = document.getElementById("username").value;
+            if (username) {
+                socket.emit("joinChat", username);
+                document.getElementById("username-container").classList.add("hidden");
+                document.getElementById("chat").classList.remove("hidden");
+            }
+        }
+
+        function sendMessage() {
+            let message = document.getElementById("message").value;
+            if (message.trim() !== "") {
+                socket.emit("chatMessage", message);
+                document.getElementById("message").value = "";
+            }
+        }
+
+        socket.on("message", (msg) => {
+            let chatBox = document.getElementById("chat-box");
+            let newMsg = document.createElement("div");
+            newMsg.textContent = msg;
+            newMsg.classList.add("bg-gray-600", "text-white", "p-2", "rounded", "mb-2");
+            chatBox.appendChild(newMsg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Play notification sound
+            document.getElementById("notificationSound").play();
+
+            // Change tab title if inactive
+            if (!chatActive) {
+                document.title = "New Message!";
+            }
+        });
+    </script>
+
+</body>
+</html>
